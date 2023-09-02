@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<structinator>
+   <structs>
+      <struct name="Serial429">
+         <members>
+            <member name="statusReg" type="bit" size="16">
+            </member>
+            <member name="ControlReg" type="bit" size="32">
+            </member>
+         </members>
+      </struct>
+      
+      <struct name="Serial1558">
+         <members>
+            <member name="statusReg" type="bit" size="16">
+            </member>
+            <member name="ControlReg" type="bit" size="32">
+            </member>
+         </members>
+      </struct>
+
+   </structs>
+</structinator>
