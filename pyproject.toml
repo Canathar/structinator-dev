@@ -1,0 +1,104 @@
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ pyproject.toml                                                                                                                ║
+# ║                                                                                                                               ║
+# ║    Document Encoding           : UTF-8, UNIX Line Terminator                                                                  ║
+# ║    Document Best Viewed/Printed: Page{Letter, Landscape, 0.25in Side Margins}   Font{Monospace Font, Normal, 10pt}            ║
+# ║                                                                                                                               ║
+# ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+# ║                                                        Revision History                                                       ║
+# ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+# ║  <public version id>+<local ver id>   <date>                     <Revision Type>                                              ║
+# ║ NN.NN.NNaaNN.aaaaNNN+VV.vv.DOYyy.bb (dd MMM yy) - Initial Creation/Development Update/Maintenance Update                      ║
+# ║                                                                                                                               ║
+# ║  0. 0. 1 a 1        + 1.00.24423.xx (01 Sep 23) - Initial Creation {J. Laccone}                                               ║
+# ║                                                      Added header, added reference data                                       ║
+# ║                                                                                                                               ║
+# ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+# ║                                                           Reference                                                           ║
+# ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+# ║                                                                                                                               ║
+# ║   Tom's Obvious Minimal Language                                                                                              ║
+# ║   ------------------------------                                                                                              ║
+# ║      https://toml.io/en/                                                                                                      ║
+# ║                                                                                                                               ║
+# ║   Declaring Project Metadata -- Python Packaging User Guide                                                                   ║
+# ║   ---------------------------------------------------------                                                                   ║
+# ║      https://packaging.python.org/en/latest/specifications/declaring-project-metadata/                                        ║
+# ║                                                                                                                               ║
+# ║   Packaging Python Projects                                                                                                   ║
+# ║   -------------------------                                                                                                   ║
+# ║      https://packaging.python.org/en/latest/tutorials/packaging-projects/                                                     ║
+# ║                                                                                                                               ║
+# ║                                                                                                                               ║
+# ║   Packaging PEPs                                                                                                              ║
+# ║   --------------                                                                                                              ║
+# ║      https://peps.python.org/topic/packaging/                                                                                 ║
+# ║                                                                                                                               ║
+# ║   PEP 440 -- Version Identification and Dependency Specification                                                              ║
+# ║   --------------------------------------------------------------                                                              ║
+# ║      https://peps.python.org/pep-0440/                                                                                        ║
+# ║                                                                                                                               ║
+# ║   PEP 518 -- Specifying Minimum Build System Requirements for Pythion Projects                                                ║
+# ║   ----------------------------------------------------------------------------                                                ║
+# ║      https://peps.python.org/pep-0518/                                                                                        ║
+# ║                                                                                                                               ║
+# ║   PEP 621 -- Strong Project Metadata In pyproject.toml                                                                        ║
+# ║   ----------------------------------------------------                                                                        ║
+# ║      https://peps.python.org/pep-0621/                                                                                        ║
+# ║                                                                                                                               ║
+# ║                                                                                                                               ║
+# ║   Building and Distributing Packages with Setuptools                                                                          ║
+# ║   --------------------------------------------------                                                                          ║
+# ║      https://setuptools.pypa.io/en/latest/userguide/index.html                                                                ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+# For valid tags, see "Declaring Project Metadata -- Python Packaging User Guide"
+[project]
+name = "structinator"
+version = "0.0.1a50"
+authors = [
+    { name="Joseph Laccone", email="joseph.laccone@gmail.com" }
+]
+description = "Wheel Python Example"
+license = {file = "LICENSE"}
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Application Frameworks"
+]
+dependencies = [
+    "pycodestyle >= 2.10",
+    "pydocstyle >= 6.3",
+    "pylint >= 2.17"
+]
+
+
+[project.urls]
+"Homepage" = "https://github.com/Canathar/structinator-dev"
+
+
+[tool.setuptools]
+include-package-data = true
+script-files = [
+    "src/structinator-scripts/structinator_cli.py"
+]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+#include = ["structinator"]
+namespaces = true
+
+
+[tool.setuptools.package-data]
+"structinator.data" = ["*.xml"]
+
