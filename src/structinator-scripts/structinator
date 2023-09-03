@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
-# ║ structinator.py                                                                                                               ║
+# ║ structinator (see warning in the notes section below)                                                                         ║
 # ║                                                                                                                               ║
 # ║    Document Encoding           : UTF-8, UNIX Line Terminator                                                                  ║
 # ║    Document Best Viewed/Printed: Page{Legal, Landscape, 0.25in Side Margins}   Font{Monospaced Font, Normal, 10pt}            ║
@@ -16,6 +16,8 @@
 # ║                                                      Added header, added reference data                                       ║
 # ║  0. 0. 1    . dev  2+ 1.00.24523.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Added capability to load package resource data                           ║
+# ║  0. 0. 1    . dev  3+ 1.00.24623.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Renamed script for clarity                                               ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -51,6 +53,16 @@
 # ║                                                             Notes                                                             ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                                                                                               ║
+# ║   =========================================================================================================================   ║
+# ║    ==                                         !!! WARNING - VERY IMPORTANT !!!                                           ==   ║
+# ║   =========================================================================================================================   ║
+# ║      The name of this command line script is the same as the package name. In order for the package to be created             ║
+# ║      correctly, this command line script MUST NEVER HAVE a .py extension! Failure to follow this, will result in              ║
+# ║      the inability to generate a wheel. Even when this command line script is run as a stand-alone module,                    ║
+# ║      all the package imports will fail.                                                                                       ║
+# ║   =========================================================================================================================   ║
+# ║                                                                                                                               ║
+# ║                                                                                                                               ║
 # ║ Code Check Prerequisites                                                                                                      ║
 # ║ ========================                                                                                                      ║
 # ║    1. Open a terminal window                                                                                                  ║
@@ -74,7 +86,7 @@
 # ║          NOTE2: Ignore discussed here: https://github.com/PyCQA/pycodestyle/issues/386                                        ║
 # ║                                                                                                                               ║
 # ║             pycodestyle --ignore E129,E221 --max-line-len=132 <python-file>                                                   ║
-# ║             (ex: pycodestyle --ignore E129,E221 --max-line-len=132 structinator_cli.py)                                       ║
+# ║             (ex: pycodestyle --ignore E129,E221 --max-line-len=132 structinator)                                              ║
 # ║                                                                                                                               ║
 # ║                                                                                                                               ║
 # ║    Docstring Compliance Procedure                                                                                             ║
@@ -86,7 +98,7 @@
 # ║          NOTE2: Ignore discussed here: https://github.com/PyCQA/pydocstyle/issues/141                                         ║
 # ║                                                                                                                               ║
 # ║             pydocstyle --add-ignore D202 <python-file>                                                                        ║
-# ║             (ex: pydocstyle --add-ignore D202 structinator_cli.py)                                                            ║
+# ║             (ex: pydocstyle --add-ignore D202 structinator)                                                                   ║
 # ║                                                                                                                               ║
 # ║                                                                                                                               ║
 # ║    Functional Compliance Procedure                                                                                            ║
@@ -98,10 +110,10 @@
 # ║          NOTE2: Use the command "pylint --long-help" to display the current linter configuration                              ║
 # ║                                                                                                                               ║
 # ║             pylint --max-line-length=132 <python-file>                                                                        ║
-# ║             (ex: pylint --max-line-length=132 structinator_cli.py)                                                            ║
+# ║             (ex: pylint --max-line-length=132 structinator)                                                                   ║
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-"""Module to generate an interactive tool for demonstration of python wheel development/packaging."""
+"""Module to provide a command line interface (CLI) for the C++ structire generation demonstration tool."""
 import enum
 import getopt
 import importlib.resources
@@ -118,7 +130,7 @@ from structinator.xml_tools import XmlTools
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev2+1.00.24523.00"
+__version__ = "0.0.1.dev3+1.00.24623.00"
 
 
 # Attach to the root logger
@@ -148,6 +160,7 @@ class OperationType(enum.Enum):
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 class CommandLineProcessor():
+    # pylint: disable=too-few-public-methods
     """Class containing the scripts comamnd line processor object."""
 
     def __init__(self):
@@ -400,47 +413,41 @@ def script_main(argv):
 
     LOG.debug("   ***** Verify That a Valid Operation Was Specified *****")
     if clp.operation == OperationType.UNKNOWN:
+        raise UnknownOperationError('No operation specified!')
 
-        raise  UnknownOperationError('No operation specified!')
+    LOG.debug("   ***** Perform The Specified Operation *****")
 
-    else:
+    operation_name = str(clp.operation.name)
+    LOG.info("   ===== Operation: %s =====", operation_name)
+    print(f"Perform {operation_name} Operation")
 
-        LOG.debug("   ***** Perform The Specified Operation *****")
+    if clp.operation == OperationType.GENERATE:
 
-        operation_name = str(clp.operation.name)
-        LOG.info("   ===== Operation: %s =====", operation_name)
-        print(f"Perform {operation_name} Operation")
+        # Obtain the path for the specified sample XML file from the package data
+        data_file = importlib.resources.files("structinator").joinpath("data").joinpath('basic_struct_example_1.xml')
 
-        if clp.operation == OperationType.GENERATE:
+        xts = XmlTools()
+        xts.struct_source_file_name = data_file
+        xts.open_struct_source_xml_file()
+        xts.generate_struct()
 
-            # Obtain the path for the specified sample XML file from the package data
-            data_file = importlib.resources.files("structinator").joinpath("data").joinpath('basic_struct_example_1.xml')
+        hft = HeaderFileTools()
+        hft.header_template_file = xts.template_file_name
+        hft.header_file_contents = xts.struct_file_contents
+        hft.open_header_template_file()
 
-            xts = XmlTools()
-            xts.struct_source_file_name = data_file
-            xts.open_struct_source_xml_file()
-            xts.generate_struct()
+        # Allow the command line to overwrite the output file name, if a value is provided
+        if clp.output_header_name != "":
+            hft.header_file_name = clp.output_header_name
+        else:
+            hft.header_file_name = xts.struct_file_name
+        hft.write_header_file()
 
-            hft = HeaderFileTools()
-            hft.header_template_file = xts.template_file_name
-            hft.header_file_contents = xts.struct_file_contents
-            hft.open_header_template_file()
+        operation_status = True
 
-            # Allow the command line to overwrite the output file name, if a value is provided
-            if clp.output_header_name != "":
-                hft.header_file_name = clp.output_header_name
-            else:
-                hft.header_file_name = xts.struct_file_name
-            hft.write_header_file()
+    elif clp.operation == OperationType.VERIFY:
 
-            # Load the specified sample XML file from the package data
-            #open_xml_file(src_file)
-
-            operation_status = True
-
-        elif clp.operation == OperationType.VERIFY:
-
-            operation_status = True
+        operation_status = True
 
     if operation_status is False:
 
