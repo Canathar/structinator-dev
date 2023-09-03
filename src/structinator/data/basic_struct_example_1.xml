@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <structinator>
+   <config>
+      <header_file_name>basicStructExample1.h</header_file_name>
+      <template_file_name>header_file_template_1.txt</template_file_name>
+   </config>
    <structs>
       <struct name="Serial429">
          <members>
-            <member name="statusReg" type="bit" size="16">
-            </member>
-            <member name="ControlReg" type="bit" size="32">
-            </member>
+            <member name="statusReg" type="int"/>
+            <member name="ControlReg" type="int"/>
          </members>
       </struct>
-      
+
       <struct name="Serial1558">
          <members>
-            <member name="statusReg" type="bit" size="16">
-            </member>
-            <member name="ControlReg" type="bit" size="32">
-            </member>
+            <member name="statusReg" type="long"/>
+            <member name="ControlReg" type="int"/>
          </members>
       </struct>
 
