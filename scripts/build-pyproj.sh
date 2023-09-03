@@ -12,6 +12,8 @@
 # ║                                                                                                                               ║
 # ║  1.00.24323.00 (31 Aug 23) - Initial Creation {J. Laccone}                                                                    ║
 # ║                                 Added base code                                                                               ║
+# ║  1.00.24523.00 (02 Sep 23) - Development Update {J. Laccone}                                                                  ║
+# ║                                 Corrected error with versions numbered above 99                                               ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -195,9 +197,9 @@ auto="${default_auto}"
 #        use the post-release notation for full maintenance releases which may include code changes (Regex Groups 8-9)
 #
 # Define the regular expression for the public version id data
-#                     major     .    minor     .    micro          pre-release         .  post-release        . dev-release
-#                      \1             \2             \3          \4         \5          \6         \7         \8         \9
-PVID="version = \"([1-9]?[0-9])\.([1-9]?[0-9])\.([1-9]?[0-9])([ab]|rc)?([1-9]?[0-9])?(\.post)?([1-9]?[0-9])?(\.dev)?([1-9]?[0-9])?\""
+#                       major     .      minor     .      micro          pre-release           .  post-release          . dev-release
+#                        \1               \2               \3          \4           \5          \6           \7         \8           \9
+PVID="version = \"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([ab]|rc)?(0|[1-9][0-9]*)?(\.post)?(0|[1-9][0-9]*)?(\.dev)?(0|[1-9][0-9]*)?\""
 NEW_PVID=""
 
 
