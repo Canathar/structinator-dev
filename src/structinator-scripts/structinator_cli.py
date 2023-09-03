@@ -102,7 +102,6 @@
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 """Module to generate an interactive tool for demonstration of python wheel development/packaging."""
-import datetime
 import enum
 import getopt
 import importlib.resources

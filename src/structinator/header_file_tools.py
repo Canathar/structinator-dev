@@ -79,7 +79,6 @@ import importlib.resources
 import inspect
 import logging
 import os
-import re
 
 # Set the public version identifer (major.minor.micro) and the local version label
 __version__ = "0.0.1.dev2+1.00.24523.00"
@@ -123,6 +122,8 @@ class HeaderFileTools():
         self.__header_file_contents = ""
 
         self.__header_template_data = ""
+
+        self.__header_template_file = ""
 
         LOG.debug("%s Exiting", fname)
 
