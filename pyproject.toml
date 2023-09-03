@@ -60,7 +60,7 @@ build-backend = "setuptools.build_meta"
 # For valid tags, see "Declaring Project Metadata -- Python Packaging User Guide"
 [project]
 name = "structinator"
-version = "0.0.1a50"
+version = "0.0.1a135"
 authors = [
     { name="Joseph Laccone", email="joseph.laccone@gmail.com" }
 ]
@@ -100,5 +100,5 @@ namespaces = true
 
 
 [tool.setuptools.package-data]
-"structinator.data" = ["*.xml"]
+"structinator.data" = ["*.xml", "*.txt"]
 
