@@ -12,8 +12,10 @@
 # ║  <public version id>+<local ver id>   <date>                     <Revision Type>                                              ║
 # ║ NN.NN.NNaaNN.aaaaNNN+VV.vv.DOYyy.bb (dd MMM yy) - Initial Creation/Development Update/Maintenance Update                      ║
 # ║                                                                                                                               ║
-# ║  0. 0. 0 a 1        + 1.00.24423.00 (01 Sep 23) - Initial Creation {J. Laccone}                                               ║
+# ║  0. 0. 1    . dev  1+ 1.00.24423.00 (01 Sep 23) - Initial Creation {J. Laccone}                                               ║
 # ║                                                      Added header, added reference data                                       ║
+# ║  0. 0. 1    . dev  2+ 1.00.24523.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added capability to load package resource data                           ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -72,7 +74,7 @@
 # ║          NOTE2: Ignore discussed here: https://github.com/PyCQA/pycodestyle/issues/386                                        ║
 # ║                                                                                                                               ║
 # ║             pycodestyle --ignore E129,E221 --max-line-len=132 <python-file>                                                   ║
-# ║             (ex: pycodestyle --ignore E129,E221 --max-line-len=132 structinator.py)                                           ║
+# ║             (ex: pycodestyle --ignore E129,E221 --max-line-len=132 structinator_cli.py)                                       ║
 # ║                                                                                                                               ║
 # ║                                                                                                                               ║
 # ║    Docstring Compliance Procedure                                                                                             ║
@@ -84,7 +86,7 @@
 # ║          NOTE2: Ignore discussed here: https://github.com/PyCQA/pydocstyle/issues/141                                         ║
 # ║                                                                                                                               ║
 # ║             pydocstyle --add-ignore D202 <python-file>                                                                        ║
-# ║             (ex: pydocstyle --add-ignore D202 structinator.py)                                                                ║
+# ║             (ex: pydocstyle --add-ignore D202 structinator_cli.py)                                                            ║
 # ║                                                                                                                               ║
 # ║                                                                                                                               ║
 # ║    Functional Compliance Procedure                                                                                            ║
@@ -96,7 +98,7 @@
 # ║          NOTE2: Use the command "pylint --long-help" to display the current linter configuration                              ║
 # ║                                                                                                                               ║
 # ║             pylint --max-line-length=132 <python-file>                                                                        ║
-# ║             (ex: pylint --max-line-length=132 structinator.py)                                                                ║
+# ║             (ex: pylint --max-line-length=132 structinator_cli.py)                                                            ║
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 """Module to generate an interactive tool for demonstration of python wheel development/packaging."""
@@ -111,11 +113,13 @@ import re
 import sys
 import textwrap
 
-from structinator.xml_tools import open_xml_file
+from structinator.exceptions import UnknownOperationError
+from structinator.header_file_tools import HeaderFileTools
+from structinator.xml_tools import XmlTools
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.0a1+1.00.24423.00"
+__version__ = "0.0.1.dev2+1.00.24523.00"
 
 
 # Attach to the root logger
@@ -145,7 +149,6 @@ class OperationType(enum.Enum):
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 class CommandLineProcessor():
-   # pylint: disable=too-many-instance-attributes,too-few-publicmethods
     """Class containing the scripts comamnd line processor object."""
 
     def __init__(self):
@@ -155,6 +158,8 @@ class CommandLineProcessor():
         LOG.debug("%s Entering", fname)
 
         self.__operation = OperationType.UNKNOWN
+
+        self.__output_header_name = ""
 
         LOG.debug("%s Exiting", fname)
 
@@ -171,6 +176,23 @@ class CommandLineProcessor():
         """Get Function."""
         return self.__operation
 
+    def __get_output_header_name(self):
+        """Get Function."""
+        return self.__output_header_name
+
+    # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    # ║                                                                                                               ║
+    # ║                                     ===== Class Member set Functions =====                                    ║
+    # ║                                                                                                               ║
+    # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+    # ╔════════════════════════════════════════════════════════════════════════════════════════════════╗
+    # ║                     Script Processing Command Line Arguments set Functions                     ║
+    # ╚════════════════════════════════════════════════════════════════════════════════════════════════╝
+    def __set_output_header_name(self, value):
+        """Set Function."""
+        self.__output_header_name = value
+
     # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║                                                                                                               ║
     # ║                                      ===== Class Member Properties =====                                      ║
@@ -185,6 +207,8 @@ class CommandLineProcessor():
     operation = property(__get_operation,
                          doc='Enumerated value denoting the desired execution for the script')
 
+    output_header_name = property(__get_output_header_name, __set_output_header_name,
+                                  doc='String value denoting the filename of the generated output header')
 
     # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║ @fn     process_command_line                                                                                  ║
@@ -209,7 +233,8 @@ class CommandLineProcessor():
             # Add any script specific command line options/arguments
             # Any additional options/arguments MUST be processed in the for loop below
             script_short_opts = "*hv"
-            script_long_opts = ["help", "log", "version"]
+            script_long_opts = ["output-header-name=",
+                                "help", "log", "version"]
 
             # If we have no arguments, display usage
             if len(argv) < 1:
@@ -235,9 +260,7 @@ class CommandLineProcessor():
 
             # ===== Unknown Operation =====
             else:
-                print(f"\nUnknown Operation: {cmd_operation}")
-                usage()
-                sys,exit(3)
+                raise UnknownOperationError(f"Invalid operation: {cmd_operation}")
 
             # Parse the command line into options/arguments
             # pylint: disable=unused-variable
@@ -255,7 +278,7 @@ class CommandLineProcessor():
                     print(message)
                     LOG.debug(message)
 
-                # ===== Information Commands - Always Available =====
+                # ===== Information Options - Always Available =====
 
                 # Log
                 if opt == "--log":
@@ -274,7 +297,11 @@ class CommandLineProcessor():
                 elif opt in ("-v", "--version"):
                     display_version()
 
+                # ===== Header File Options =====
 
+                # Output header filename
+                elif opt == "--output-header-name":
+                    self.__output_header_name = arg
 
                 # ADD CUSTOM COMMAND LINE OPTION PROCESSING BELOW!!!
                 #
@@ -294,15 +321,23 @@ class CommandLineProcessor():
                 # elif opt in ("-<single-character-option>", "--<multiple-character-option>"):
 
                 else:
-                    raise Exception('Invalid Command Line Argument: ' + opt)
+                    raise getopt.GetoptError(f"Invalid option {opt}")
 
-        except getopt.GetoptError as ex:
+        except getopt.GetoptError as get_opt_err:
 
             template = "   GetoptError - Error Type: {0} Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
+            message = template.format(type(get_opt_err).__name__, get_opt_err.args)
             print(message)
             LOG.error(message)
             usage()
+            sys.exit(2)
+
+        except UnknownOperationError as unknown_cmd_err:
+
+            template = "   Processing Error - {0}   Arguments - {1}"
+            message = template.format(type(unknown_cmd_err).__name__, unknown_cmd_err.args[0])
+            print(message)
+            LOG.error(message)
             sys.exit(2)
 
         finally:
@@ -367,7 +402,7 @@ def script_main(argv):
     LOG.debug("   ***** Verify That a Valid Operation Was Specified *****")
     if clp.operation == OperationType.UNKNOWN:
 
-        raise Exception('No operation specified!')
+        raise  UnknownOperationError('No operation specified!')
 
     else:
 
@@ -380,20 +415,37 @@ def script_main(argv):
         if clp.operation == OperationType.GENERATE:
 
             # Obtain the path for the specified sample XML file from the package data
-            src_file = importlib.resources.files("structinator").joinpath("data").joinpath("basic_struct_example_1.xml")
+            data_file = importlib.resources.files("structinator").joinpath("data").joinpath('basic_struct_example_1.xml')
+
+            xts = XmlTools()
+            xts.struct_source_file_name = data_file
+            xts.open_struct_source_xml_file()
+            xts.generate_struct()
+
+            hft = HeaderFileTools()
+            hft.header_template_file = xts.template_file_name
+            hft.header_file_contents = xts.struct_file_contents
+            hft.open_header_template_file()
+
+            # Allow the command line to overwrite the output file name, if a value is provided
+            if clp.output_header_name != "":
+                hft.header_file_name = clp.output_header_name
+            else:
+                hft.header_file_name = xts.struct_file_name
+            hft.write_header_file()
 
             # Load the specified sample XML file from the package data
-            open_xml_file(src_file)
+            #open_xml_file(src_file)
 
             operation_status = True
 
-        elif clp.operation == OperationType.VALIDATE:
+        elif clp.operation == OperationType.VERIFY:
 
             operation_status = True
 
     if operation_status is False:
 
-        raise Exception('Operation Error')
+        raise UnknownOperationError('Operation Error')
 
     LOG.debug("%s Exiting", fname)
     LOG.info("----- Program End -----")
@@ -442,16 +494,38 @@ def usage():
     # Add the operations
     operations += """
         generate
-           Create a C++ header file from the supplied XML files
+            Create a C++ header file from the supplied XML files
 
         verify
-           Perform a validation on an XML file using a supplied XSL file
+            Perform a validation on an XML file using a supplied XSL file
 
 
     OPTIONS"""
 
     # Process the text to make it look pretty
     tmp_text = textwrap.dedent(operations)
+    usage_text += re.sub(r'\^', '', tmp_text)
+
+    # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    # ║                                              Header File Options                                              ║
+    # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+    # Define the common indent for use with dedent
+    header_file_text = """
+    ^"""
+
+    # Add the section header
+    header_file_text += """
+        ========== Header File Options =========="""
+
+    header_file_text += """
+
+        --output-header-name <arg>
+            String value representing the name of the header file to create
+    """
+
+    # Process the text to make it look pretty
+    tmp_text = textwrap.dedent(header_file_text)
     usage_text += re.sub(r'\^', '', tmp_text)
 
     # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
@@ -464,22 +538,22 @@ def usage():
 
     # Add the section header
     info_usage_text += """
-       ========== Information Options =========="""
+        ========== Information Options =========="""
 
     info_usage_text += """
 
         -h, --help
-           Display usage information (this text)"""
+            Display usage information (this text)"""
 
     info_usage_text += """
 
         --log
-           Generate a log file"""
+            Generate a log file"""
 
     info_usage_text += """
 
         -v, --version
-           Display the script version
+            Display the script version
     """
 
     # Process the text to make it look pretty
@@ -503,18 +577,18 @@ def usage():
 
     NOTES
 
-       This script is designed to provide an example framework
+        This script is designed to provide an example framework
 
 
     Examples:
 
-       # Obtain the version of the script
-       """ + script_evoke + """ --version
+        # Obtain the version of the script
+        """ + script_evoke + """ --version
 
-       # Start the script with the various options
-       """ + script_evoke + """ test1 \\
-       """ + general_msg_example_text_1 + """ \\
-       """ + general_msg_example_text_2 + """ \\
+        # Start the script with the various options
+        """ + script_evoke + """ test1 \\
+        """ + general_msg_example_text_1 + """ \\
+        """ + general_msg_example_text_2 + """ \\
 
     """
 
