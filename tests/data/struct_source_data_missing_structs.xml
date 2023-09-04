@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<structinator>
+   <config>
+      <header_file_name>basicStructExample1.h</header_file_name>
+      <template_file_name>header_file_template_1.txt</template_file_name>
+   </config>
+   <structs/>
+</structinator>
