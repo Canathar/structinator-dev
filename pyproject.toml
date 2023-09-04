@@ -60,7 +60,7 @@ build-backend = "setuptools.build_meta"
 # For valid tags, see "Declaring Project Metadata -- Python Packaging User Guide"
 [project]
 name = "structinator"
-version = "0.0.1a136"
+version = "0.0.1a148"
 authors = [
     { name="Joseph Laccone", email="joseph.laccone@gmail.com" }
 ]
