@@ -13,6 +13,8 @@
 # ║                                                                                                                               ║
 # ║  0. 0. 1    . dev  1+ 1.00.24523.00 (02 Sep 23) - Initial Creation {J. Laccone}                                               ║
 # ║                                                      Added header, added reference data, added python source code encoding    ║
+# ║  0. 0. 1    . dev  2+ 1.00.24623.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added additional error classes                                           ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -77,7 +79,103 @@
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev1+1.00.24523.00"
+__version__ = "0.0.1.dev2+1.00.24623.00"
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  SourceDataTreeEmptyError                                                                                              ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a source data tree empty exception                                                 ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class SourceDataTreeEmptyError(Exception):
+    """Class containing the definition of a source data tree empty exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructHeaderFileNotFoundError                                                                                         ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct header file not found exception                                           ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructHeaderFileNotFoundError(Exception):
+    """Class containing the definition of a struct header file not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructMembersNotFoundError                                                                                            ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct members not found exception                                               ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructMembersNotFoundError(Exception):
+    """Class containing the definition of a struct members not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructSourceDataFileNotFoundError                                                                                     ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct source data file not found exception                                      ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructSourceDataFileNotFoundError(Exception):
+    """Class containing the definition of a struct source data file not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructTemplateFileNotFoundError                                                                                       ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct template file not found exception                                         ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructTemplateFileNotFoundError(Exception):
+    """Class containing the definition of a struct template file not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructsNotFoundError                                                                                                  ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a structs not found exception                                                      ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructsNotFoundError(Exception):
+    """Class containing the definition of a structs not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
