@@ -15,6 +15,8 @@
 # ║                                                      Added header, added reference data, added python source code encoding    ║
 # ║  0. 0. 1    . dev  2+ 1.00.24523.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Added capability to load package resource data                           ║
+# ║  0. 0. 1    . dev  3+ 1.00.24623.00 (03 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added additional error handling                                          ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -79,14 +81,20 @@
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 """Module to provide functional capabilities to read/write/verify XML files."""
-import datetime
-import importlib.resources
 import inspect
 import logging
 from lxml import etree as et
 
+from structinator.exceptions import SourceDataTreeEmptyError
+from structinator.exceptions import StructHeaderFileNotFoundError
+from structinator.exceptions import StructMembersNotFoundError
+from structinator.exceptions import StructSourceDataFileNotFoundError
+from structinator.exceptions import StructTemplateFileNotFoundError
+from structinator.exceptions import StructsNotFoundError
+
+
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev2+1.00.24523.00"
+__version__ = "0.0.1.dev3+1.00.24623.00"
 
 
 # Attach to the root logger
@@ -94,10 +102,11 @@ LOG = logging.getLogger()
 
 # Xpath constants used for searching the source data
 # see: https://www.w3schools.com/xml/xpath_syntax.asp
-CONFIG_HEADER_FILE_NAME_XPATH ='/structinator/config/header_file_name'
+CONFIG_HEADER_FILE_NAME_XPATH = '/structinator/config/header_file_name'
 CONFIG_TEMPLATE_FILE_NAME_XPATH = '/structinator/config/template_file_name'
 STRUCT_XPATH = '/structinator/structs/struct'
 STRUCT_MEMBER_XPATH = './/members/member'
+
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
 # ║ @class  XmlTools                                                                                                              ║
@@ -106,12 +115,13 @@ STRUCT_MEMBER_XPATH = './/members/member'
 # ║                                                                                                                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 class XmlTools():
+    # pylint: disable=too-many-instance-attributes
     """Class containing the functionality associated with XML support operations."""
 
     def __init__(self):
         """Initialize the object."""
 
-        fname = __class__.__name__ + '.' +  str(inspect.currentframe().f_code.co_name)
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
         # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
@@ -225,15 +235,26 @@ class XmlTools():
     # ║ @return void                                                                                                              ║
     # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
     def generate_struct(self):
-        """Function to generate a C++ struct from XML data."""
+        """Generate a C++ struct from XML data."""
 
-        fname = __class__.__name__ + '.' +  str(inspect.currentframe().f_code.co_name)
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
         try:
 
+            # =======================================================
+            # == Process the struct(s) that are in the source data ==
+            # =======================================================
+            # Verify that the source tree was populated
+            if self.struct_source_tree is None:
+                raise SourceDataTreeEmptyError('Source data tree not loaded from XML file')
+
             # Retrieve the collection of structs from the tree
             structs = self.struct_source_tree.xpath(STRUCT_XPATH)
+
+            # Verify that there are structs
+            if len(structs) == 0:
+                raise StructsNotFoundError('No structs found in source data')
 
             # Generate a C++ struct for each of the nodes in the collection
             for struct in structs:
@@ -245,6 +266,10 @@ class XmlTools():
                 # Retrieve the collection of members from the tree
                 members = struct.xpath(STRUCT_MEMBER_XPATH)
 
+                # Verify that there are members
+                if len(members) == 0:
+                    raise StructMembersNotFoundError('No struct members found in source data')
+
                 # Generate a C++ member for each of the nodes in the collection
                 for member in members:
 
@@ -254,16 +279,15 @@ class XmlTools():
                 # End the struct
                 self.struct_file_contents += "} " + struct.attrib['name'] + ";\n\n"
 
-        except Exception as ex:
+        except (SourceDataTreeEmptyError, StructsNotFoundError, StructMembersNotFoundError) as struct_err:
 
-            template = "   Error Generating Struct - Error Type: {0} Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
+            template = "   Error Generating Struct - Error Type: {0} Arguments: {1}"
+            message = template.format(type(struct_err).__name__, struct_err.args)
             LOG.error(message)
 
         finally:
 
             LOG.debug("%s Exiting", fname)
-
 
     # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║ @fn     open_struct_source_xml_file                                                                                       ║
@@ -273,31 +297,62 @@ class XmlTools():
     # ║ @return void                                                                                                              ║
     # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
     def open_struct_source_xml_file(self):
-        """Function to open the struct source xml file."""
+        """Open the struct source xml file."""
 
-        fname = __class__.__name__ + '.' +  str(inspect.currentframe().f_code.co_name)
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
         try:
+
+            # ===================================================
+            # == Open the supplied file and parse the contents ==
+            # ===================================================
+            # Verify that the specified file has been supplied
+            if self.struct_source_file_name == "":
+                raise StructSourceDataFileNotFoundError('Class member is empty')
 
             # Open the specified file
             self.struct_source_tree = et.parse(self.struct_source_file_name)
             LOG.debug("The root tag of the document is: %s", str(self.struct_source_tree.getroot().tag))
 
+            # =====================
+            # == Header filename ==
+            # =====================
             # Retrieve the header file name from the tree
             header_file_node = self.struct_source_tree.xpath(CONFIG_HEADER_FILE_NAME_XPATH)
+
+            # Verify that the header filename was retrieved
+            if header_file_node[0].text is None:
+                raise StructHeaderFileNotFoundError('Struct Header filename empty in source data')
+
+            # Store the header file name
             self.struct_file_name = header_file_node[0].text
             LOG.debug("The configured header filename is: %s", self.struct_file_name)
 
+            # =======================
+            # == Template filename ==
+            # =======================
             # Retrieve the template file name from the tree
             template_file_node = self.struct_source_tree.xpath(CONFIG_TEMPLATE_FILE_NAME_XPATH)
+
+            # Verify that the template filename was retrieved
+            if template_file_node[0].text is None:
+                raise StructTemplateFileNotFoundError('Template filename empty in source data')
+
+            # Store the template file name
             self.template_file_name = template_file_node[0].text
             LOG.debug("The configured template filename is: %s", self.template_file_name)
 
-        except Exception as ex:
+        except OSError as err:
 
-            template = "   Error Opening XML File - Error Type: {0} Arguments:\n{1!r}"
-            message = template.format(type(ex).__name__, ex.args)
+            template = "   Error Opening XML File - Error Type: {0} Arguments: {1}"
+            message = template.format(type(err).__name__, err.args)
+            LOG.error(message)
+
+        except (StructHeaderFileNotFoundError, StructSourceDataFileNotFoundError, StructTemplateFileNotFoundError) as struct_err:
+
+            template = "   Error Opening XML File - Error Type: {0} Arguments: {1}"
+            message = template.format(type(struct_err).__name__, struct_err.args)
             LOG.error(message)
 
         finally:
