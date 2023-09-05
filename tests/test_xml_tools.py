@@ -13,6 +13,8 @@
 # ║                                                                                                                               ║
 # ║  0. 0. 1    . dev  1+ 1.00.24623.00 (03 Sep 23) - Initial Creation {J. Laccone}                                               ║
 # ║                                                      Added header, added reference data, added python source code encoding    ║
+# ║  0. 0. 1    . dev  2+ 1.00.24723.00 (04 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added tests for validate_struct_source_xml_file                          ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -134,7 +136,7 @@ class TestXmlTools(unittest.TestCase):
         test_file = '/tmp/' + src_test_file
 
         # Set the instance source data file
-        self.xts.struct_source_file_name = test_file
+        self.xts.struct_source_xml_file_name = test_file
 
         # Open/parse the source data
         self.xts.open_struct_source_xml_file()
@@ -167,7 +169,7 @@ class TestXmlTools(unittest.TestCase):
         test_file = '/tmp/' + src_test_file
 
         # Set the instance source data file
-        self.xts.struct_source_file_name = test_file
+        self.xts.struct_source_xml_file_name = test_file
 
         # Open/parse the source data
         self.xts.open_struct_source_xml_file()
@@ -194,7 +196,7 @@ class TestXmlTools(unittest.TestCase):
         # ===================
         # == Preconditions ==
         # ====================
-        self.xts.struct_source_file_name = 'bill'
+        self.xts.struct_source_xml_file_name = 'bill'
 
         # ===============
         # == Unit Test ==
@@ -235,7 +237,7 @@ class TestXmlTools(unittest.TestCase):
         test_file = '/tmp/' + src_test_file
 
         # Set the instance source data file
-        self.xts.struct_source_file_name = test_file
+        self.xts.struct_source_xml_file_name = test_file
 
         # Unit Test
         with self.assertRaises(Exception) as context:
@@ -263,7 +265,7 @@ class TestXmlTools(unittest.TestCase):
         test_file = '/tmp/' + src_test_file
 
         # Set the instance source data file
-        self.xts.struct_source_file_name = test_file
+        self.xts.struct_source_xml_file_name = test_file
 
         # ===============
         # == Unit Test ==
@@ -280,3 +282,44 @@ class TestXmlTools(unittest.TestCase):
         # Clean-up Aisle Two
         if os.path.isfile(test_file):
             os.remove(test_file)
+
+    def test_validate_struct_source_xml_file_pass(self):
+        """Function to test the operation of validate_struct_source_xml_file."""
+
+        # ===================
+        # == Preconditions ==
+        # ====================
+        # Copy the necessary test data to the /tmp dir
+        src_test_file = 'struct_source_data_good.xml'
+        shutil.copy(self.my_path + src_test_file, '/tmp')
+        test_file = '/tmp/' + src_test_file
+
+        # Set the instance source data file
+        self.xts.struct_source_xml_file_name = test_file
+
+        # Copy the necessary test schema to the /tmp dir
+        src_schema_file = 'struct_source_schema_good.xsd'
+        shutil.copy(self.my_path + src_schema_file, '/tmp')
+        schema_file = '/tmp/' + src_schema_file
+
+        # Set the instance source schema file
+        self.xts.struct_source_xsd_file_name = schema_file
+
+        # Open/parse the source data
+        self.xts.open_struct_source_xml_file()
+
+        # ===============
+        # == Unit Test ==
+        # ===============
+        # Call the function
+        self.xts.validate_struct_source_xml_file()
+
+        # Verify XML was valid
+        self.assertTrue(self.xts.is_valid)
+
+        # Clean-up Aisle Two
+        if os.path.isfile(test_file):
+            os.remove(test_file)
+
+        if os.path.isfile(schema_file):
+            os.remove(schema_file)
