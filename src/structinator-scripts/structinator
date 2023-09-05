@@ -16,8 +16,10 @@
 # ║                                                      Added header, added reference data                                       ║
 # ║  0. 0. 1    . dev  2+ 1.00.24523.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Added capability to load package resource data                           ║
-# ║  0. 0. 1    . dev  3+ 1.00.24623.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║  0. 0. 1    . dev  3+ 1.00.24623.00 (03 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Renamed script for clarity                                               ║
+# ║  0. 0. 1    . dev  4+ 1.00.24723.00 (04 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added Xslt capability                                                    ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -130,7 +132,7 @@ from structinator.xml_tools import XmlTools
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev3+1.00.24623.00"
+__version__ = "0.0.1.dev4+1.00.24723.00"
 
 
 # Attach to the root logger
@@ -147,7 +149,7 @@ class OperationType(enum.Enum):
     """Enumeration to represent all of the choices available for script operation."""
 
     GENERATE = 1
-    VERIFY = 2
+    VALIDATE = 2
 
     UNKNOWN = 100
 
@@ -166,7 +168,7 @@ class CommandLineProcessor():
     def __init__(self):
         """Initialize the object."""
 
-        fname = 'CommandLineProcessor.' + str(inspect.currentframe().f_code.co_name)
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
         self.__operation = OperationType.UNKNOWN
@@ -237,7 +239,7 @@ class CommandLineProcessor():
         # pylint: disable=too-many-branches,too-many-statements,too-many-nested-blocks
         """Process the command line options and arguments passed to the script."""
 
-        fname = 'CommandLineProcessor.' + str(inspect.currentframe().f_code.co_name)
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
         try:
@@ -260,8 +262,8 @@ class CommandLineProcessor():
             if cmd_operation == "generate":
                 self.__operation = OperationType.GENERATE
 
-            elif cmd_operation == "verify":
-                self.__operation = OperationType.VERIFY
+            elif cmd_operation == "validate":
+                self.__operation = OperationType.VALIDATE
 
             # ===== Special Case Items =====
             elif cmd_operation in ("-h", "--help"):
@@ -421,16 +423,27 @@ def script_main(argv):
     LOG.info("   ===== Operation: %s =====", operation_name)
     print(f"Perform {operation_name} Operation")
 
+    # Obtain the path for the specified sample XML file from the package data
+    data_file = 'basic_struct_example_1.xml'
+    data_file_full_path = importlib.resources.files("structinator").joinpath("data").joinpath(data_file)
+
+    # Obtain the path for the specified sample XSD file from the package data
+    schema_file = 'basic_struct_example_1.xsd'
+    schema_file_full_path = importlib.resources.files("structinator").joinpath("data").joinpath(schema_file)
+
+    # Process the XML source data file
+    xts = XmlTools()
+    xts.struct_source_xml_file_name = data_file_full_path
+    xts.struct_source_xsd_file_name = schema_file_full_path
+    xts.open_struct_source_xml_file()
+    xts.validate_struct_source_xml_file()
+
     if clp.operation == OperationType.GENERATE:
 
-        # Obtain the path for the specified sample XML file from the package data
-        data_file = importlib.resources.files("structinator").joinpath("data").joinpath('basic_struct_example_1.xml')
-
-        xts = XmlTools()
-        xts.struct_source_file_name = data_file
-        xts.open_struct_source_xml_file()
+        # Generate the dynamic struct data from the source data
         xts.generate_struct()
 
+        # Generate the C++ header file
         hft = HeaderFileTools()
         hft.header_template_file = xts.template_file_name
         hft.header_file_contents = xts.struct_file_contents
@@ -445,7 +458,12 @@ def script_main(argv):
 
         operation_status = True
 
-    elif clp.operation == OperationType.VERIFY:
+    elif clp.operation == OperationType.VALIDATE:
+
+        if xts.is_valid is True:
+            print(f"   VALID - Data File: {data_file} Validated Against Schema File: {schema_file}")
+        else:
+            print(f"   INVALID - Data File: {data_file} Validated Against Schema File: {schema_file}")
 
         operation_status = True
 
@@ -502,7 +520,7 @@ def usage():
         generate
             Create a C++ header file from the supplied XML files
 
-        verify
+        validate
             Perform a validation on an XML file using a supplied XSL file
 
 

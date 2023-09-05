@@ -17,6 +17,8 @@
 # ║                                                      Added capability to load package resource data                           ║
 # ║  0. 0. 1    . dev  3+ 1.00.24623.00 (03 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Added additional error handling                                          ║
+# ║  0. 0. 1    . dev  4+ 1.00.24723.00 (04 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added Xslt capability                                                    ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
 # ║                                                           Reference                                                           ║
@@ -88,13 +90,15 @@ from lxml import etree as et
 from structinator.exceptions import SourceDataTreeEmptyError
 from structinator.exceptions import StructHeaderFileNotFoundError
 from structinator.exceptions import StructMembersNotFoundError
+from structinator.exceptions import StructSchemaFileNotFoundError
+from structinator.exceptions import StructSourceDataFileInvalidError
 from structinator.exceptions import StructSourceDataFileNotFoundError
 from structinator.exceptions import StructTemplateFileNotFoundError
 from structinator.exceptions import StructsNotFoundError
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev3+1.00.24623.00"
+__version__ = "0.0.1.dev4+1.00.24723.00"
 
 
 # Attach to the root logger
@@ -124,6 +128,9 @@ class XmlTools():
         fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
         LOG.debug("%s Entering", fname)
 
+        # Internal variable to contain the result of the schema valudation
+        self.__is_valid = False
+
         # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════╗
         # ║                                              Local Variables                                              ║
         # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════╣
@@ -131,14 +138,26 @@ class XmlTools():
         # ║   Parameters used to define the local script                                                              ║
         # ║                                                                                                           ║
         # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════╝
-        self.__struct_source_file_name = ""
 
+        # Name of the XML file containing the raw struct source data
+        self.__struct_source_xml_file_name = ""
+
+        # Name of the XSD file containing the schema to validate the raw struct source data
+        self.__struct_source_xsd_file_name = ""
+
+        # Object to store the XSD tree once it is parsed from the schema file
+        self.__struct_source_schema = None
+
+        # Object to store the XML tree once it is parsed from the source data file
         self.__struct_source_tree = None
 
+        # String to store the dynamically genertated C++ header file contents
         self.__struct_file_contents = ""
 
+        # Name of the output C++ header file (obtained from the source data file)
         self.__struct_file_name = ""
 
+        # Name of the text file template to use to generate the C++ header file (obtianed from source data file)
         self.__template_file_name = ""
 
         LOG.debug("%s Exiting", fname)
@@ -148,13 +167,24 @@ class XmlTools():
     # ║                                     ===== Class Member get Functions =====                                    ║
     # ║                                                                                                               ║
     # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    def __get_is_valid(self):
+        """Get Function."""
+        return self.__is_valid
 
     # ╔════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║                     Script Processing Command Line Arguments get Functions                     ║
     # ╚════════════════════════════════════════════════════════════════════════════════════════════════╝
-    def __get_struct_source_file_name(self):
+    def __get_struct_source_xml_file_name(self):
         """Get Function."""
-        return self.__struct_source_file_name
+        return self.__struct_source_xml_file_name
+
+    def __get_struct_source_xsd_file_name(self):
+        """Get Function."""
+        return self.__struct_source_xsd_file_name
+
+    def __get_struct_source_schema(self):
+        """Get Function."""
+        return self.__struct_source_schema
 
     def __get_struct_source_tree(self):
         """Get Function."""
@@ -177,13 +207,24 @@ class XmlTools():
     # ║                                     ===== Class Member set Functions =====                                    ║
     # ║                                                                                                               ║
     # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    def __set_is_valid(self, value):
+        """Set Function."""
+        self.__is_valid = value
 
     # ╔════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║                     Script Processing Command Line Arguments set Functions                     ║
     # ╚════════════════════════════════════════════════════════════════════════════════════════════════╝
-    def __set_struct_source_file_name(self, value):
+    def __set_struct_source_xml_file_name(self, value):
         """Set Function."""
-        self.__struct_source_file_name = value
+        self.__struct_source_xml_file_name = value
+
+    def __set_struct_source_xsd_file_name(self, value):
+        """Set Function."""
+        self.__struct_source_xsd_file_name = value
+
+    def __set_struct_source_schema(self, value):
+        """Set Function."""
+        self.__struct_source_schema = value
 
     def __set_struct_source_tree(self, value):
         """Set Function."""
@@ -212,20 +253,29 @@ class XmlTools():
     # ║                                                                                                ║
     # ║ NOTE: Ensure that these properties are defined BELOW the get/set routines they reference       ║
     # ╚════════════════════════════════════════════════════════════════════════════════════════════════╝
-    struct_source_file_name = property(__get_struct_source_file_name, __set_struct_source_file_name,
-                                       doc='String value denoting the name of the file containting the struct source data')
+    is_valid = property(__get_is_valid, __set_is_valid,
+                        doc='Boolean flag denoting whether or not XML struct source data is valid')
+
+    struct_source_xml_file_name = property(__get_struct_source_xml_file_name, __set_struct_source_xml_file_name,
+                                           doc='String name of XML file containing the raw struct source data')
+
+    struct_source_xsd_file_name = property(__get_struct_source_xsd_file_name, __set_struct_source_xsd_file_name,
+                                           doc='String name of XML file containing schema to validate the raw struct source data')
+
+    struct_source_schema = property(__get_struct_source_schema, __set_struct_source_schema,
+                                    doc='Object to store XML schema once it is parsed from the schema file')
 
     struct_source_tree = property(__get_struct_source_tree, __set_struct_source_tree,
-                                  doc='Object containing the string data from the struct source data file')
+                                  doc='Object to store XML tree once it is parsed from the source data file')
 
     struct_file_contents = property(__get_struct_file_contents, __set_struct_file_contents,
-                                    doc='Object containing the string data to be output to the header file')
+                                    doc='String to store the dynamically genertated C++ header file contents')
 
     struct_file_name = property(__get_struct_file_name, __set_struct_file_name,
-                                doc='String value denoting the name of the output header file')
+                                doc='String name of output C++ header file (obtained from the source data file)')
 
     template_file_name = property(__get_template_file_name, __set_template_file_name,
-                                  doc='String value denoting the name of the template file')
+                                  doc='String name of text file template to generate the C++ header file (from source data file)')
 
     # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
     # ║ @fn     generate_struct                                                                                                   ║
@@ -245,6 +295,10 @@ class XmlTools():
             # =======================================================
             # == Process the struct(s) that are in the source data ==
             # =======================================================
+            # Verify that the source data tree is valid
+            if self.__is_valid is False:
+                raise StructSourceDataFileInvalidError('XML Document Is Invalid')
+
             # Verify that the source tree was populated
             if self.struct_source_tree is None:
                 raise SourceDataTreeEmptyError('Source data tree not loaded from XML file')
@@ -285,6 +339,13 @@ class XmlTools():
             message = template.format(type(struct_err).__name__, struct_err.args)
             LOG.error(message)
 
+        except StructSourceDataFileInvalidError as struct_err:
+
+            template = "   Error Generating Struct - Error Type: {0} Arguments: {1}"
+            message = template.format(type(struct_err).__name__, struct_err.args)
+            LOG.error(message)
+            print(message)
+
         finally:
 
             LOG.debug("%s Exiting", fname)
@@ -308,11 +369,11 @@ class XmlTools():
             # == Open the supplied file and parse the contents ==
             # ===================================================
             # Verify that the specified file has been supplied
-            if self.struct_source_file_name == "":
+            if self.struct_source_xml_file_name == "":
                 raise StructSourceDataFileNotFoundError('Class member is empty')
 
             # Open the specified file
-            self.struct_source_tree = et.parse(self.struct_source_file_name)
+            self.struct_source_tree = et.parse(self.struct_source_xml_file_name)
             LOG.debug("The root tag of the document is: %s", str(self.struct_source_tree.getroot().tag))
 
             # =====================
@@ -354,6 +415,54 @@ class XmlTools():
             template = "   Error Opening XML File - Error Type: {0} Arguments: {1}"
             message = template.format(type(struct_err).__name__, struct_err.args)
             LOG.error(message)
+
+        finally:
+
+            LOG.debug("%s Exiting", fname)
+
+    # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+    # ║ @fn     validate_struct_source_xml_file                                                                                   ║
+    # ║                                                                                                                           ║
+    # ║ @brief  Function to validate the struct source xml file.                                                                  ║
+    # ║                                                                                                                           ║
+    # ║ @return void                                                                                                              ║
+    # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+    def validate_struct_source_xml_file(self):
+        """Validate the struct source xml file."""
+
+        fname = __class__.__name__ + '.' + str(inspect.currentframe().f_code.co_name)
+        LOG.debug("%s Entering", fname)
+
+        try:
+
+            # =================================================
+            # == Open the schema file and parse the contents ==
+            # =================================================
+            # Verify that the specified file has been supplied
+            if self.struct_source_xsd_file_name == "":
+                raise StructSchemaFileNotFoundError('Class member is empty')
+
+            # Open the specified file
+            self.struct_source_schema = et.XMLSchema(file=self.struct_source_xsd_file_name)
+            LOG.debug("Schema document is: %s", self.struct_source_schema)
+
+            # Validate the XML source document
+            self.is_valid = self.struct_source_schema.validate(self.struct_source_tree)
+            if self.is_valid is False:
+                raise StructSourceDataFileInvalidError('XML Document Is Invalid')
+
+        except StructSchemaFileNotFoundError as struct_err:
+
+            template = "   Error Validating XML File - Error Type: {0} Arguments: {1}"
+            message = template.format(type(struct_err).__name__, struct_err.args)
+            LOG.error(message)
+
+        except StructSourceDataFileInvalidError as struct_err:
+
+            template = "   Error Validating XML File - Error Type: {0} Arguments: {1}"
+            message = template.format(type(struct_err).__name__, struct_err.args)
+            LOG.error(message)
+            print(message)
 
         finally:
 

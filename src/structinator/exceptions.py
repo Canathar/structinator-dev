@@ -13,7 +13,9 @@
 # ║                                                                                                                               ║
 # ║  0. 0. 1    . dev  1+ 1.00.24523.00 (02 Sep 23) - Initial Creation {J. Laccone}                                               ║
 # ║                                                      Added header, added reference data, added python source code encoding    ║
-# ║  0. 0. 1    . dev  2+ 1.00.24623.00 (02 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║  0. 0. 1    . dev  2+ 1.00.24623.00 (03 Sep 23) - Development Update {J. Laccone}                                             ║
+# ║                                                      Added additional error classes                                           ║
+# ║  0. 0. 1    . dev  3+ 1.00.24723.00 (04 Sep 23) - Development Update {J. Laccone}                                             ║
 # ║                                                      Added additional error classes                                           ║
 # ║                                                                                                                               ║
 # ╠═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
@@ -79,7 +81,7 @@
 
 
 # Set the public version identifer (major.minor.micro) and the local version label
-__version__ = "0.0.1.dev2+1.00.24623.00"
+__version__ = "0.0.1.dev3+1.00.24723.00"
 
 
 # ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
@@ -122,6 +124,38 @@ class StructHeaderFileNotFoundError(Exception):
 # ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
 class StructMembersNotFoundError(Exception):
     """Class containing the definition of a struct members not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructSchemaFileNotFoundError                                                                                         ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct schema file not found exception                                           ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructSchemaFileNotFoundError(Exception):
+    """Class containing the definition of a struct schema file not found exception."""
+
+    def __init__(self, message):
+        """Initialize the object."""
+
+        self.message = message
+        super().__init__(self.message)
+
+
+# ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+# ║ @class  StructSourceDataFileInvalidError                                                                                      ║
+# ║                                                                                                                               ║
+# ║ @brief  Class containing the definition of a struct source data file invalid exception                                        ║
+# ║                                                                                                                               ║
+# ╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+class StructSourceDataFileInvalidError(Exception):
+    """Class containing the definition of a struct source data file invalid exception."""
 
     def __init__(self, message):
         """Initialize the object."""
